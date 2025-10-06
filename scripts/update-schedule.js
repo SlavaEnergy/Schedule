@@ -1,83 +1,95 @@
-// scripts/update-schedule.js
-import fs from "fs";
-import path from "path";
-import axios from "axios";
-import { JSDOM } from "jsdom";
-import { execSync } from "child_process";
+require('dotenv').config();
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const { JSDOM } = require('jsdom');
+const { execSync } = require('child_process');
 
-// --- Конфигурация ---
+// --- КОНФИГУРАЦИЯ ---
 const CONFIG = {
-  BASE_URL: "https://shtpt.getcourse.ru",
-  SCHEDULE_PAGE_URL: "https://shtpt.getcourse.ru/teach/control/stream/view/id/934775562",
+  GETCOURSE_URL: 'https://shtpt.getcourse.ru',
+  SCHEDULE_PAGE_URL: 'https://shtpt.getcourse.ru/teach/control/stream/view/id/934775562',
   COOKIE: process.env.GETCOURSE_COOKIE
 };
 
-const OUTPUT_DIR = "Schedule";
-if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR);
+const DOWNLOADS_DIR = path.join(__dirname, '../Schedule');
+
+// Создаём папку если нет
+if (!fs.existsSync(DOWNLOADS_DIR)) fs.mkdirSync(DOWNLOADS_DIR);
 
 const session = axios.create({
   withCredentials: true,
   headers: {
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    Cookie: CONFIG.COOKIE
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+    'Cookie': CONFIG.COOKIE
   }
 });
 
-async function downloadFile(url, dest) {
-  const response = await session.get(url, { responseType: "arraybuffer" });
-  fs.writeFileSync(dest, response.data);
-  console.log(`⬇️  Скачан ${path.basename(dest)}`);
+// --- Функции ---
+
+async function downloadFile(url, filePath) {
+  const writer = fs.createWriteStream(filePath);
+  const response = await session({ method: 'GET', url, responseType: 'stream' });
+  response.data.pipe(writer);
+  return new Promise((resolve, reject) => {
+    writer.on('finish', resolve);
+    writer.on('error', reject);
+  });
 }
 
-async function convertDocToPng(docPath) {
-  console.log(`🧩 Конвертирую ${path.basename(docPath)}...`);
-  execSync(`libreoffice --headless --convert-to png --outdir ${OUTPUT_DIR} "${docPath}"`);
+function convertDocToPng(docPath, pngPath) {
+  try {
+    execSync(`libreoffice --headless --convert-to png --outdir "${DOWNLOADS_DIR}" "${docPath}"`);
+    // Переименуем полученный png в нужное имя, если LibreOffice присвоил другое
+    const generatedName = path.basename(docPath, '.doc') + '.png';
+    const generatedPath = path.join(DOWNLOADS_DIR, generatedName);
+    if (generatedPath !== pngPath && fs.existsSync(generatedPath)) {
+      fs.renameSync(generatedPath, pngPath);
+    }
+    console.log(`🖼 Конвертирован: ${pngPath}`);
+  } catch (e) {
+    console.error('❌ Ошибка конвертации:', e.message);
+  }
 }
 
-// --- Главная функция ---
 async function updateSchedules() {
-  console.log("🔍 Проверяю страницу с расписаниями...");
-  const mainPage = await session.get(CONFIG.SCHEDULE_PAGE_URL);
-  const dom = new JSDOM(mainPage.data);
-  const lessons = dom.window.document.querySelectorAll(".lesson-list li[data-lesson-id]");
+  console.log('🔍 Проверяю страницу с расписаниями...');
+  const response = await session.get(CONFIG.SCHEDULE_PAGE_URL);
+  const dom = new JSDOM(response.data);
+  const lessonElements = dom.window.document.querySelectorAll('.lesson-list li[data-lesson-id]');
 
-  for (const lesson of lessons) {
-    const linkEl = lesson.querySelector("a[href]");
-    const titleEl = lesson.querySelector(".link.title");
-    if (!linkEl || !titleEl) continue;
+  for (const lessonEl of lessonElements) {
+    const linkElement = lessonEl.querySelector('a[href]');
+    const titleElement = lessonEl.querySelector('.link.title');
+    if (!linkElement || !titleElement) continue;
 
-    const date = titleEl.textContent.trim().split(" ")[0];
-    const lessonUrl = `${CONFIG.BASE_URL}${linkEl.getAttribute("href")}`;
-    const pngPath = path.join(OUTPUT_DIR, `${date}.png`);
+    const lessonUrl = `${CONFIG.GETCOURSE_URL}${linkElement.getAttribute('href')}`;
+    const lessonResponse = await session.get(lessonUrl);
+    const lessonDom = new JSDOM(lessonResponse.data);
+    const fileLink = lessonDom.window.document.querySelector('a[href*=".doc"]');
+    if (!fileLink) continue;
 
-    if (fs.existsSync(pngPath)) {
-      console.log(`⏩ ${date}.png уже существует, пропускаю`);
-      continue;
+    const originalName = fileLink.textContent.trim();
+    const match = originalName.match(/\d{2}\.\d{2}\.\d{4}/);
+    if (!match) continue;
+    const datePart = match[0];
+
+    const docFileName = `${datePart}.doc`;
+    const pngFileName = `${datePart}.png`;
+    const docFilePath = path.join(DOWNLOADS_DIR, docFileName);
+    const pngFilePath = path.join(DOWNLOADS_DIR, pngFileName);
+
+    if (!fs.existsSync(docFilePath)) {
+      const fileUrl = fileLink.href.startsWith('http') ? fileLink.href : `${CONFIG.GETCOURSE_URL}${fileLink.href}`;
+      console.log(`⬇️  Скачан ${docFileName}`);
+      await downloadFile(fileUrl, docFilePath);
+
+      console.log(`🧩 Конвертирую ${docFileName}...`);
+      convertDocToPng(docFilePath, pngFilePath);
+    } else {
+      console.log(`✔ Уже скачан: ${docFileName}`);
     }
-
-    console.log(`📅 Найдено новое расписание на ${date}`);
-    const lessonPage = await session.get(lessonUrl);
-    const lessonDom = new JSDOM(lessonPage.data);
-    const docLink = lessonDom.window.document.querySelector('a[href*=".doc"]');
-
-    if (!docLink) {
-      console.log(`⚠️  В уроке ${date} нет .doc файла`);
-      continue;
-    }
-
-    const fileUrl = docLink.href.startsWith("http")
-      ? docLink.href
-      : `${CONFIG.BASE_URL}${docLink.href}`;
-    const docPath = path.join(OUTPUT_DIR, `${date}.doc`);
-
-    await downloadFile(fileUrl, docPath);
-    await convertDocToPng(docPath);
-    console.log(`✅ Расписание ${date} обработано!\n`);
   }
-}
 
-updateSchedules().catch((err) => {
-  console.error("❌ Ошибка выполнения:", err);
-  process.exit(1);
-});
+// --- Запуск ---
+updateSchedules().catch(err => console.error('❌ Ошибка:', err));
