@@ -62,21 +62,40 @@
   <div id="result"></div>
 
   <script>
-    function showSchedule() {
+    async function showSchedule() {
       const date = document.getElementById("dateInput").value;
-      const imgPath = `public/schedules/${date}.png`;
+      const folder = 'public/schedules/';
+      const files = await fetchFilesList(folder);
 
-      const img = new Image();
-      img.src = imgPath;
+      // Ищем файл, который начинается с даты
+      const matchedFile = files.find(f => f.startsWith(date));
 
-      img.onload = () => {
-        document.getElementById("result").innerHTML = "";
-        document.getElementById("result").appendChild(img);
-      };
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "";
 
-      img.onerror = () => {
-        document.getElementById("result").innerHTML = "Расписания на этот день не существует";
-      };
+      if (matchedFile) {
+        const img = new Image();
+        img.src = folder + matchedFile;
+        img.onload = () => resultDiv.appendChild(img);
+        img.onerror = () => resultDiv.innerHTML = "Ошибка при загрузке файла";
+      } else {
+        resultDiv.innerHTML = "Расписания на этот день не существует";
+      }
+    }
+
+    async function fetchFilesList(folder) {
+      // Для GitHub Pages нет возможности читать директории напрямую,
+      // поэтому можно завести отдельный JSON-файл со списком расписаний
+      // Например: public/schedules/list.json = ["2025-09-01 просмотрено.png", "2025-09-12 просмотрено.png"]
+      try {
+        const response = await fetch(folder + 'list.json');
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data;
+      } catch (e) {
+        console.error('Ошибка получения списка файлов:', e);
+        return [];
+      }
     }
   </script>
 </body>
