@@ -13,8 +13,6 @@ const CONFIG = {
 };
 
 const DOWNLOADS_DIR = path.join(__dirname, '../Schedule');
-
-// Создаём папку если нет
 if (!fs.existsSync(DOWNLOADS_DIR)) fs.mkdirSync(DOWNLOADS_DIR);
 
 const session = axios.create({
@@ -26,7 +24,6 @@ const session = axios.create({
 });
 
 // --- Функции ---
-
 async function downloadFile(url, filePath) {
   const writer = fs.createWriteStream(filePath);
   const response = await session({ method: 'GET', url, responseType: 'stream' });
@@ -40,7 +37,6 @@ async function downloadFile(url, filePath) {
 function convertDocToPng(docPath, pngPath) {
   try {
     execSync(`libreoffice --headless --convert-to png --outdir "${DOWNLOADS_DIR}" "${docPath}"`);
-    // Переименуем полученный png в нужное имя, если LibreOffice присвоил другое
     const generatedName = path.basename(docPath, '.doc') + '.png';
     const generatedPath = path.join(DOWNLOADS_DIR, generatedName);
     if (generatedPath !== pngPath && fs.existsSync(generatedPath)) {
@@ -52,6 +48,7 @@ function convertDocToPng(docPath, pngPath) {
   }
 }
 
+// --- Основная функция ---
 async function updateSchedules() {
   console.log('🔍 Проверяю страницу с расписаниями...');
   const response = await session.get(CONFIG.SCHEDULE_PAGE_URL);
@@ -70,9 +67,13 @@ async function updateSchedules() {
     if (!fileLink) continue;
 
     const originalName = fileLink.textContent.trim();
-    const match = originalName.match(/\d{2}\.\d{2}\.\d{4}/);
-    if (!match) continue;
-    const datePart = match[0];
+    console.log('Найден файл:', originalName);
+    const match = originalName.match(/(\d{2}\.\d{2}\.\d{4})/);
+    if (!match) {
+      console.log('Не удалось распознать дату в имени файла');
+      continue;
+    }
+    const datePart = match[1];
 
     const docFileName = `${datePart}.doc`;
     const pngFileName = `${datePart}.png`;
@@ -90,6 +91,8 @@ async function updateSchedules() {
       console.log(`✔ Уже скачан: ${docFileName}`);
     }
   }
+
+  console.log('✅ Готово!');
 }
 
 // --- Запуск ---
