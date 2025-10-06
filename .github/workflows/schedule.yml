@@ -1,0 +1,36 @@
+name: Update Schedule
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # каждые 6 часов
+  workflow_dispatch: # возможность запускать вручную
+
+jobs:
+  update-schedule:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install jsdom axios docx-pdf --save
+
+      - name: Run update script
+        run: node scripts/update-schedule.js
+        env:
+          GETCOURSE_COOKIE: ${{ secrets.GETCOURSE_COOKIE }}
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/schedules
+          git commit -m "Update schedules"
+          git push
+        continue-on-error: true
