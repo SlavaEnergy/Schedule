@@ -90,6 +90,7 @@ async function updateSchedules() {
       console.log(`✔ Уже скачан: ${docFileName}`);
     }
   }
+}
 
 // --- Запуск ---
 updateSchedules().catch(err => console.error('❌ Ошибка:', err));
