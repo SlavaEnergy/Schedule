@@ -54,7 +54,7 @@
   </style>
 </head>
 <body>
-  <h1>Расписание занятий</h1>
+  <h1>Расписание</h1>
   <p>Введите дату в формате <b>YYYY-MM-DD</b>:</p>
   <input type="date" id="dateInput">
   <button onclick="showSchedule()">Показать</button>
@@ -62,36 +62,21 @@
   <div id="result"></div>
 
   <script>
-    async function showSchedule() {
+    function showSchedule() {
       const date = document.getElementById("dateInput").value;
-      const folder = 'public/schedules/';
-      const files = await fetchFilesList(folder);
+      const imgPath = `public/schedules/${date} просмотрено.png`;
 
-      const matchedFile = files.find(f => f.startsWith(date));
+      const img = new Image();
+      img.src = imgPath;
 
-      const resultDiv = document.getElementById("result");
-      resultDiv.innerHTML = "";
+      img.onload = () => {
+        document.getElementById("result").innerHTML = "";
+        document.getElementById("result").appendChild(img);
+      };
 
-      if (matchedFile) {
-        const img = new Image();
-        img.src = folder + matchedFile;
-        img.onload = () => resultDiv.appendChild(img);
-        img.onerror = () => resultDiv.innerHTML = "Ошибка при загрузке файла";
-      } else {
-        resultDiv.innerHTML = "Расписания на этот день не существует";
-      }
-    }
-
-    async function fetchFilesList(folder) {
-      try {
-        const response = await fetch(folder + 'list.json');
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data;
-      } catch (e) {
-        console.error('Ошибка получения списка файлов:', e);
-        return [];
-      }
+      img.onerror = () => {
+        document.getElementById("result").innerHTML = "Расписания на этот день не существует";
+      };
     }
   </script>
 </body>
