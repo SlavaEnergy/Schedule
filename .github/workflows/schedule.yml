@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 */6 * * *" # каждые 6 часов
-  workflow_dispatch: # возможность запускать вручную
 
 jobs:
   update-schedule:
