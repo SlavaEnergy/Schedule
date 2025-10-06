@@ -68,15 +68,20 @@ async function updateSchedules() {
 
     const originalName = fileLink.textContent.trim();
     console.log('Найден файл:', originalName);
-    const match = originalName.match(/(\d{2}\.\d{2}\.\d{4})/);
+
+    // Распознаем дату с двумя или четырьмя цифрами года
+    const match = originalName.match(/(\d{2})\.(\d{2})\.(\d{2}|\d{4})/);
     if (!match) {
       console.log('Не удалось распознать дату в имени файла');
       continue;
     }
-    const datePart = match[1];
 
-    const docFileName = `${datePart}.doc`;
-    const pngFileName = `${datePart}.png`;
+    let [ , day, month, year ] = match;
+    if (year.length === 2) year = '20' + year; // Преобразуем 2 цифры в 4
+    const formattedDate = `${day}.${month}.${year}`;
+
+    const docFileName = `${formattedDate}.doc`;
+    const pngFileName = `${formattedDate}.png`;
     const docFilePath = path.join(DOWNLOADS_DIR, docFileName);
     const pngFilePath = path.join(DOWNLOADS_DIR, pngFileName);
 
