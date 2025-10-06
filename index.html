@@ -67,7 +67,6 @@
       const folder = 'public/schedules/';
       const files = await fetchFilesList(folder);
 
-      // Ищем файл, который начинается с даты
       const matchedFile = files.find(f => f.startsWith(date));
 
       const resultDiv = document.getElementById("result");
@@ -84,9 +83,6 @@
     }
 
     async function fetchFilesList(folder) {
-      // Для GitHub Pages нет возможности читать директории напрямую,
-      // поэтому можно завести отдельный JSON-файл со списком расписаний
-      // Например: public/schedules/list.json = ["2025-09-01 просмотрено.png", "2025-09-12 просмотрено.png"]
       try {
         const response = await fetch(folder + 'list.json');
         if (!response.ok) return [];
