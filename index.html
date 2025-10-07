@@ -54,19 +54,23 @@
   </style>
 </head>
 <body>
-  <h1>Расписание</h1>
+  <h1>Schedule</h1>
   <p>Введите дату в формате <b>DD.MM.YYYY</b>:</p>
-  <input type="text" id="dateInput" placeholder="например, 01.10.2025">
+  <input type="text" id="dateInput" placeholder="например 02.09.2025">
   <button onclick="showSchedule()">Показать</button>
 
   <div id="result"></div>
 
   <script>
     function showSchedule() {
-      const formattedDate = document.getElementById("dateInput").value.trim();
-      if (!formattedDate) return;
+      const date = document.getElementById("dateInput").value.trim();
 
-      const imgPath = `public/schedules/${formattedDate} просмотрено.png`;
+      if (!/^\d{2}\.\d{2}\.\d{4}$/.test(date)) {
+        document.getElementById("result").innerHTML = "Введите дату в формате DD.MM.YYYY";
+        return;
+      }
+
+      const imgPath = `Schedule/${date}.png`;
 
       const img = new Image();
       img.src = imgPath;
@@ -77,7 +81,7 @@
       };
 
       img.onerror = () => {
-        document.getElementById("result").innerHTML = "Расписания на этот день не существует";
+        document.getElementById("result").innerHTML = "Расписание на этот день не найдено";
       };
     }
   </script>
