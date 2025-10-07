@@ -55,19 +55,16 @@
 </head>
 <body>
   <h1>Расписание</h1>
-  <p>Введите дату в формате <b>YYYY-MM-DD</b>:</p>
-  <input type="date" id="dateInput">
+  <p>Введите дату в формате <b>DD.MM.YYYY</b>:</p>
+  <input type="text" id="dateInput" placeholder="например, 01.10.2025">
   <button onclick="showSchedule()">Показать</button>
 
   <div id="result"></div>
 
   <script>
     function showSchedule() {
-      const dateInput = document.getElementById("dateInput").value;
-      if (!dateInput) return;
-
-      const [year, month, day] = dateInput.split("-");
-      const formattedDate = `${day}.${month}.${year}`;
+      const formattedDate = document.getElementById("dateInput").value.trim();
+      if (!formattedDate) return;
 
       const imgPath = `public/schedules/${formattedDate} просмотрено.png`;
 
