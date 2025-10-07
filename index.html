@@ -63,8 +63,13 @@
 
   <script>
     function showSchedule() {
-      const date = document.getElementById("dateInput").value;
-      const imgPath = `public/schedules/${date} просмотрено.png`;
+      const dateInput = document.getElementById("dateInput").value;
+      if (!dateInput) return;
+
+      const [year, month, day] = dateInput.split("-");
+      const formattedDate = `${day}.${month}.${year}`;
+
+      const imgPath = `public/schedules/${formattedDate} просмотрено.png`;
 
       const img = new Image();
       img.src = imgPath;
