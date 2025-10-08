@@ -53,22 +53,18 @@
       box-shadow: 0 0 15px rgba(0,0,0,0.5);
       transition: all 0.4s ease;
       cursor: zoom-in;
+      transform-origin: center center;
     }
 
-    /* При увеличении */
-    .fullscreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: contain;
-      background-color: rgba(0, 0, 0, 0.95);
-      z-index: 9999;
-      margin: 0;
-      border-radius: 0;
-      box-shadow: none;
+    .zoomed {
+      transform: scale(3);
       cursor: zoom-out;
+      z-index: 1000;
+      position: relative;
+    }
+
+    .zoom-active {
+      overflow: hidden;
     }
   </style>
 </head>
@@ -91,7 +87,6 @@
 
       const [year, month, day] = input.split("-");
       const date = `${day}.${month}.${year}`;
-
       const imgPath = `Schedule/${date}.png`;
 
       const img = new Image();
@@ -99,7 +94,13 @@
 
       img.onload = () => {
         img.onclick = () => {
-          img.classList.toggle("fullscreen");
+          if (img.classList.contains("zoomed")) {
+            img.classList.remove("zoomed");
+            document.body.classList.remove("zoom-active");
+          } else {
+            img.classList.add("zoomed");
+            document.body.classList.add("zoom-active");
+          }
         };
 
         document.getElementById("result").innerHTML = "";
