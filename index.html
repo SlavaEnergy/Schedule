@@ -3,18 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>Schedule</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 40px;
+    body {
       font-family: Arial, sans-serif;
       text-align: center;
       background-color: #121212;
       color: #e0e0e0;
-      box-sizing: border-box;
+      margin: 0;
+      padding: 40px;
+      overflow-x: hidden;
     }
     h1 {
       color: #ffffff;
@@ -50,11 +47,28 @@
     }
     img {
       margin-top: 20px;
-      max-width: 95%;
-      height: auto;
+      max-width: 90%;
       border: 1px solid #444;
       border-radius: 8px;
       box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      transition: all 0.4s ease;
+      cursor: zoom-in;
+    }
+
+    /* При увеличении */
+    .fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      background-color: rgba(0, 0, 0, 0.95);
+      z-index: 9999;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+      cursor: zoom-out;
     }
   </style>
 </head>
@@ -67,14 +81,6 @@
   <div id="result"></div>
 
   <script>
-    const tg = window.Telegram?.WebApp;
-
-    if (tg) {
-      tg.expand();
-      document.documentElement.style.height = "100vh";
-      document.body.style.height = "100vh";
-    }
-
     function showSchedule() {
       const input = document.getElementById("dateInput").value;
 
@@ -92,6 +98,10 @@
       img.src = imgPath;
 
       img.onload = () => {
+        img.onclick = () => {
+          img.classList.toggle("fullscreen");
+        };
+
         document.getElementById("result").innerHTML = "";
         document.getElementById("result").appendChild(img);
       };
