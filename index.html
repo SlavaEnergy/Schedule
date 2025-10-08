@@ -51,20 +51,36 @@
       border: 1px solid #444;
       border-radius: 8px;
       box-shadow: 0 0 15px rgba(0,0,0,0.5);
-      transition: all 0.4s ease;
+      transition: transform 0.4s ease;
       cursor: zoom-in;
       transform-origin: center center;
+      user-select: none;
     }
 
     .zoomed {
       transform: scale(3);
-      cursor: zoom-out;
+      cursor: grab;
       z-index: 1000;
       position: relative;
     }
 
     .zoom-active {
       overflow: hidden;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 999;
+      display: none;
+    }
+
+    .overlay.active {
+      display: block;
     }
   </style>
 </head>
@@ -75,8 +91,13 @@
   <button onclick="showSchedule()">Показать</button>
 
   <div id="result"></div>
+  <div id="overlay" class="overlay"></div>
 
   <script>
+    let isDragging = false;
+    let startX, startY, currentX = 0, currentY = 0;
+    let img = null;
+
     function showSchedule() {
       const input = document.getElementById("dateInput").value;
 
@@ -89,20 +110,11 @@
       const date = `${day}.${month}.${year}`;
       const imgPath = `Schedule/${date}.png`;
 
-      const img = new Image();
+      img = new Image();
       img.src = imgPath;
 
       img.onload = () => {
-        img.onclick = () => {
-          if (img.classList.contains("zoomed")) {
-            img.classList.remove("zoomed");
-            document.body.classList.remove("zoom-active");
-          } else {
-            img.classList.add("zoomed");
-            document.body.classList.add("zoom-active");
-          }
-        };
-
+        img.onclick = toggleZoom;
         document.getElementById("result").innerHTML = "";
         document.getElementById("result").appendChild(img);
       };
@@ -111,6 +123,46 @@
         document.getElementById("result").innerHTML = "Расписание на этот день не найдено";
       };
     }
+
+    function toggleZoom() {
+      const overlay = document.getElementById("overlay");
+
+      if (img.classList.contains("zoomed")) {
+        img.classList.remove("zoomed");
+        overlay.classList.remove("active");
+        document.body.classList.remove("zoom-active");
+        img.style.transform = "scale(1)";
+        img.style.transition = "transform 0.4s ease";
+        currentX = 0;
+        currentY = 0;
+      } else {
+        img.classList.add("zoomed");
+        overlay.classList.add("active");
+        document.body.classList.add("zoom-active");
+        img.style.transition = "transform 0.2s ease";
+      }
+    }
+
+    document.addEventListener("mousedown", (e) => {
+      if (!img || !img.classList.contains("zoomed")) return;
+      isDragging = true;
+      startX = e.clientX - currentX;
+      startY = e.clientY - currentY;
+      img.style.cursor = "grabbing";
+    });
+
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+      if (img) img.style.cursor = "grab";
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging || !img || !img.classList.contains("zoomed")) return;
+      e.preventDefault();
+      currentX = e.clientX - startX;
+      currentY = e.clientY - startY;
+      img.style.transform = `translate(${currentX}px, ${currentY}px) scale(3)`;
+    });
   </script>
 </body>
 </html>
