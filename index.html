@@ -55,6 +55,7 @@
       cursor: zoom-in;
       transform-origin: center center;
       user-select: none;
+      touch-action: none;
     }
 
     .zoomed {
@@ -161,6 +162,27 @@
       e.preventDefault();
       currentX = e.clientX - startX;
       currentY = e.clientY - startY;
+      img.style.transform = `translate(${currentX}px, ${currentY}px) scale(3)`;
+    });
+
+    document.addEventListener("touchstart", (e) => {
+      if (!img || !img.classList.contains("zoomed")) return;
+      isDragging = true;
+      const touch = e.touches[0];
+      startX = touch.clientX - currentX;
+      startY = touch.clientY - currentY;
+    });
+
+    document.addEventListener("touchend", () => {
+      isDragging = false;
+    });
+
+    document.addEventListener("touchmove", (e) => {
+      if (!isDragging || !img || !img.classList.contains("zoomed")) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      currentX = touch.clientX - startX;
+      currentY = touch.clientY - startY;
       img.style.transform = `translate(${currentX}px, ${currentY}px) scale(3)`;
     });
   </script>
