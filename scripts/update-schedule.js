@@ -89,7 +89,7 @@ async function updateSchedules() {
       console.log(`Конвертация ${docFileName}...`);
       convertDocToPng(docFilePath, pngFilePath);
     } else {
-      console.log(`✔ Уже скачан: ${docFileName}`);
+      console.log(`Уже скачан: ${docFileName}`);
     }
   }
 
