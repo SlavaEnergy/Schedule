@@ -8,7 +8,7 @@ const { execSync } = require('child_process');
 // --- КОНФИГУРАЦИЯ ---
 const CONFIG = {
   GETCOURSE_URL: 'https://shtpt.getcourse.ru',
-  SCHEDULE_PAGE_URL: 'https://shtpt.getcourse.ru/teach/control/stream/view/id/934775562',
+  SCHEDULE_PAGE_URL: 'https://shtpt.getcourse.ru/teach/control/stream/view/id/935798936',
   COOKIE: process.env.GETCOURSE_COOKIE
 };
 
