@@ -5,7 +5,6 @@ const path = require('path');
 const { JSDOM } = require('jsdom');
 const { execSync } = require('child_process');
 
-// --- КОНФИГУРАЦИЯ ---
 const CONFIG = {
   GETCOURSE_URL: 'https://shtpt.getcourse.ru',
   SCHEDULE_PAGE_URL: 'https://shtpt.getcourse.ru/teach/control/stream/view/id/935798936',
@@ -23,7 +22,6 @@ const session = axios.create({
   }
 });
 
-// --- Функции ---
 async function downloadFile(url, filePath) {
   const writer = fs.createWriteStream(filePath);
   const response = await session({ method: 'GET', url, responseType: 'stream' });
@@ -42,15 +40,14 @@ function convertDocToPng(docPath, pngPath) {
     if (generatedPath !== pngPath && fs.existsSync(generatedPath)) {
       fs.renameSync(generatedPath, pngPath);
     }
-    console.log(`🖼 Конвертирован: ${pngPath}`);
+    console.log(`Конвертирован: ${pngPath}`);
   } catch (e) {
-    console.error('❌ Ошибка конвертации:', e.message);
+    console.error('Ошибка конвертации:', e.message);
   }
 }
 
-// --- Основная функция ---
 async function updateSchedules() {
-  console.log('🔍 Проверяю страницу с расписаниями...');
+  console.log('Проверка страницы с расписаниями...');
   const response = await session.get(CONFIG.SCHEDULE_PAGE_URL);
   const dom = new JSDOM(response.data);
   const lessonElements = dom.window.document.querySelectorAll('.lesson-list li[data-lesson-id]');
@@ -69,7 +66,6 @@ async function updateSchedules() {
     const originalName = fileLink.textContent.trim();
     console.log('Найден файл:', originalName);
 
-    // Распознаем дату с двумя или четырьмя цифрами года
     const match = originalName.match(/(\d{2})\.(\d{2})\.(\d{2}|\d{4})/);
     if (!match) {
       console.log('Не удалось распознать дату в имени файла');
@@ -77,7 +73,7 @@ async function updateSchedules() {
     }
 
     let [ , day, month, year ] = match;
-    if (year.length === 2) year = '20' + year; // Преобразуем 2 цифры в 4
+    if (year.length === 2) year = '20' + year;
     const formattedDate = `${day}.${month}.${year}`;
 
     const docFileName = `${formattedDate}.doc`;
@@ -87,18 +83,17 @@ async function updateSchedules() {
 
     if (!fs.existsSync(docFilePath)) {
       const fileUrl = fileLink.href.startsWith('http') ? fileLink.href : `${CONFIG.GETCOURSE_URL}${fileLink.href}`;
-      console.log(`⬇️  Скачан ${docFileName}`);
+      console.log(`Скачан ${docFileName}`);
       await downloadFile(fileUrl, docFilePath);
 
-      console.log(`🧩 Конвертирую ${docFileName}...`);
+      console.log(`Конвертация ${docFileName}...`);
       convertDocToPng(docFilePath, pngFilePath);
     } else {
       console.log(`✔ Уже скачан: ${docFileName}`);
     }
   }
 
-  console.log('✅ Готово!');
+  console.log('Завершено');
 }
 
-// --- Запуск ---
-updateSchedules().catch(err => console.error('❌ Ошибка:', err));
+updateSchedules().catch(err => console.error('Ошибка:', err));
